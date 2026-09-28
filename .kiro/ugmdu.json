@@ -1,6 +1,5 @@
 {
     "campaignId":  "kiro-university-2026",
-    "participantId":  "",
     "lessons":  [
 
                 ],
@@ -9,5 +8,7 @@
                  ],
     "notes":  {
 
-              }
+              },
+    "repoUrl":  "https://github.com/rajkksns/campushire-ai",
+    "participantId":  "f498c428-a061-7064-05f2-0968d394d42c"
 }
