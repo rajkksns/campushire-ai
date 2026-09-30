@@ -50,7 +50,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - **Validates: Requirements 7.5**
 
 - [ ] 4. Implement the Skill_Comparator
-  - [-] 4.1 Implement categories, dataclasses, and `compare` in `app/kernel/comparator.py`
+  - [x] 4.1 Implement categories, dataclasses, and `compare` in `app/kernel/comparator.py`
     - Define `Category` enum, `StudentSkill`, `ComparedSkill`, and `PROFICIENCY_THRESHOLD = 3`
     - Build a normalized-name → max-proficiency map over the union of declared + resume-derived skills (order-invariant)
     - Categorize each required skill: matched (proficiency ≥ 3), weak (proficiency < 3), missing (no match); sort output by normalized name
@@ -66,7 +66,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - **Validates: Requirements 9.1, 9.2, 9.3**
 
 - [ ] 5. Implement the Scoring_Engine (largest-remainder / Hamilton)
-  - [ ] 5.1 Implement scoring dataclasses and the deterministic allocation in `app/kernel/scoring.py`
+  - [-] 5.1 Implement scoring dataclasses and the deterministic allocation in `app/kernel/scoring.py`
     - Define `BreakdownItem`, `ScoreResult`, and `CATEGORY_FACTOR` (matched 1.0, weak 0.5, missing 0.0)
     - Handle degenerate cases: empty required set → score 0 + empty breakdown; all-matched → 100; all-missing → 0
     - When total weight is 0, treat every skill as equally weighted (w=1)
