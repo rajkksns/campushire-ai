@@ -1,0 +1,10 @@
+fastapi<1.0,>=0.110
+uvicorn[standard]<1.0,>=0.29
+pydantic<3.0,>=2.6
+pypdf<6.0,>=4.0
+python-multipart>=0.0.9
+
+[dev]
+pytest<9.0,>=8.0
+hypothesis<7.0,>=6.100
+httpx<1.0,>=0.27

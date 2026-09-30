@@ -1,0 +1,44 @@
+Metadata-Version: 2.4
+Name: campushire-ai-backend
+Version: 0.1.0
+Summary: CampusHire AI backend: FastAPI service with a pure, deterministic skill-gap analysis kernel.
+License: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi<1.0,>=0.110
+Requires-Dist: uvicorn[standard]<1.0,>=0.29
+Requires-Dist: pydantic<3.0,>=2.6
+Requires-Dist: pypdf<6.0,>=4.0
+Requires-Dist: python-multipart>=0.0.9
+Provides-Extra: dev
+Requires-Dist: pytest<9.0,>=8.0; extra == "dev"
+Requires-Dist: hypothesis<7.0,>=6.100; extra == "dev"
+Requires-Dist: httpx<1.0,>=0.27; extra == "dev"
+
+# CampusHire AI — Backend
+
+Python 3.11 + FastAPI + Pydantic v2 service with a pure, deterministic skill-gap
+analysis kernel and parameterized SQLite persistence.
+
+## Layout
+
+- `app/` — application package
+  - `routers/` — FastAPI routers (API layer)
+  - `services/` — orchestration between routers, kernel, and repository
+  - `kernel/` — pure, deterministic analysis kernel (no I/O)
+  - `repository/` — parameterized SQLite persistence
+  - `schemas/` — Pydantic request/response models
+  - `db/` — schema DDL and initialization assets
+- `tests/` — `properties/` (Hypothesis), `unit/`, `integration/`
+
+## Setup
+
+```bash
+pip install -e ".[dev]"
+```
+
+## Testing
+
+```bash
+pytest
+```

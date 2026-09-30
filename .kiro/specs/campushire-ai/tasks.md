@@ -20,7 +20,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Ensure the function is pure (no I/O, no FastAPI/sqlite imports) and idempotent
     - _Requirements: 7.4, 2.6, 8.1_
 
-  - [ ]* 2.2 Write property test for normalization
+  - [x]* 2.2 Write property test for normalization
     - **Property 1: Normalization is idempotent and case/whitespace invariant**
     - **Validates: Requirements 7.4, 2.6**
     - Place in `tests/properties/test_normalize_properties.py`, min 100 iterations, tagged with the property number
@@ -41,11 +41,11 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Derive normalized candidate skill names from resume text using the same vocabulary and normalization; accept `None`/empty input
     - _Requirements: 8.1, 5.2_
 
-  - [ ]* 3.4 Write property test for extraction output invariants
+  - [x]* 3.4 Write property test for extraction output invariants
     - **Property 2: Extraction output invariants**
     - **Validates: Requirements 7.2, 7.3**
 
-  - [ ]* 3.5 Write property test for extraction determinism
+  - [x]* 3.5 Write property test for extraction determinism
     - **Property 3: Extraction is deterministic**
     - **Validates: Requirements 7.5**
 
@@ -57,11 +57,11 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Guarantee exactly one category per required skill and that category counts sum to the required count
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 9.1, 9.2, 9.3_
 
-  - [ ]* 4.2 Write property test for correct total partition
+  - [x]* 4.2 Write property test for correct total partition
     - **Property 4: Categorization is a correct total partition**
     - **Validates: Requirements 8.1, 8.2, 8.3, 8.4, 8.5, 8.6**
 
-  - [ ]* 4.3 Write property test for comparison determinism and order-invariance
+  - [x]* 4.3 Write property test for comparison determinism and order-invariance
     - **Property 5: Comparison is deterministic and order-invariant**
     - **Validates: Requirements 9.1, 9.2, 9.3**
 
@@ -74,45 +74,45 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Emit breakdown ordered by the same total order; ensure integer points sum exactly to the score
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.10, 10.11, 10.12, 10.13_
 
-  - [ ]* 5.2 Write property test for score bounds
+  - [x]* 5.2 Write property test for score bounds
     - **Property 6: Score is an integer within bounds**
     - **Validates: Requirements 10.1**
 
-  - [ ]* 5.3 Write property test for score conservation
+  - [x]* 5.3 Write property test for score conservation
     - **Property 7: Breakdown conserves the score**
     - **Validates: Requirements 10.3, 10.4, 10.13**
 
-  - [ ]* 5.4 Write property test for scoring determinism
+  - [x]* 5.4 Write property test for scoring determinism
     - **Property 8: Scoring is deterministic**
     - **Validates: Requirements 10.2**
 
-  - [ ]* 5.5 Write property test for extreme categorizations mapping to bounds
+  - [x]* 5.5 Write property test for extreme categorizations mapping to bounds
     - **Property 9: Extreme categorizations map to score bounds**
     - **Validates: Requirements 10.5, 10.6, 10.12, 7.6**
 
-  - [ ]* 5.6 Write property test for score monotonicity
+  - [x]* 5.6 Write property test for score monotonicity
     - **Property 10: Score is monotonic in categorization**
     - **Validates: Requirements 10.7, 10.8, 10.9**
 
-  - [ ]* 5.7 Write property test for breakdown completeness and traceability
+  - [x]* 5.7 Write property test for breakdown completeness and traceability
     - **Property 11: Breakdown is complete and traceable**
     - **Validates: Requirements 10.10**
 
-  - [ ]* 5.8 Write unit tests for exact largest-remainder tie-break and weighted proportionality
+  - [x]* 5.8 Write unit tests for exact largest-remainder tie-break and weighted proportionality
     - Assert the exact remainder-distribution outcome on a hand-computed example and a weighted-proportionality example
     - _Requirements: 10.4, 10.11_
 
 - [ ] 6. Implement the Roadmap_Generator
-  - [-] 6.1 Implement `RoadmapItem` and `generate` in `app/kernel/roadmap.py`
+  - [x] 6.1 Implement `RoadmapItem` and `generate` in `app/kernel/roadmap.py`
     - One item per missing and weak skill; exclude matched skills
     - Sort by weight desc, then missing before weak, then normalized name asc; assign `priority_rank` 1..N
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6_
 
-  - [ ]* 6.2 Write property test for roadmap membership and deterministic ordering
+  - [x]* 6.2 Write property test for roadmap membership and deterministic ordering
     - **Property 12: Roadmap membership and deterministic ordering**
     - **Validates: Requirements 12.1, 12.2, 12.3, 12.4, 12.5, 12.6**
 
-- [ ] 7. Checkpoint - pure kernel complete
+- [x] 7. Checkpoint - pure kernel complete
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 8. Implement SQLite schema and parameterized repository
