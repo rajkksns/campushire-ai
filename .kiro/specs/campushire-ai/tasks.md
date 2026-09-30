@@ -66,7 +66,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - **Validates: Requirements 9.1, 9.2, 9.3**
 
 - [ ] 5. Implement the Scoring_Engine (largest-remainder / Hamilton)
-  - [-] 5.1 Implement scoring dataclasses and the deterministic allocation in `app/kernel/scoring.py`
+  - [x] 5.1 Implement scoring dataclasses and the deterministic allocation in `app/kernel/scoring.py`
     - Define `BreakdownItem`, `ScoreResult`, and `CATEGORY_FACTOR` (matched 1.0, weak 0.5, missing 0.0)
     - Handle degenerate cases: empty required set → score 0 + empty breakdown; all-matched → 100; all-missing → 0
     - When total weight is 0, treat every skill as equally weighted (w=1)
@@ -103,7 +103,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - _Requirements: 10.4, 10.11_
 
 - [ ] 6. Implement the Roadmap_Generator
-  - [ ] 6.1 Implement `RoadmapItem` and `generate` in `app/kernel/roadmap.py`
+  - [-] 6.1 Implement `RoadmapItem` and `generate` in `app/kernel/roadmap.py`
     - One item per missing and weak skill; exclude matched skills
     - Sort by weight desc, then missing before weak, then normalized name asc; assign `priority_rank` 1..N
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6_
