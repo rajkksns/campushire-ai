@@ -116,11 +116,11 @@ The build order follows the layered architecture: shared kernel first (normalize
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 8. Implement SQLite schema and parameterized repository
-  - [ ] 8.1 Author the database schema DDL in `app/db/schema.sql`
+  - [x] 8.1 Author the database schema DDL in `app/db/schema.sql`
     - Define `student_profile`, `skill`, `certification`, `academic_project`, `resume`, `analysis` tables with CHECK constraints, `ON DELETE CASCADE` foreign keys, and the case-insensitive skill uniqueness constraint
     - _Requirements: 16.1, 16.3, 2.6_
 
-  - [ ] 8.2 Implement the parameterized repository in `app/repository/repository.py`
+  - [-] 8.2 Implement the parameterized repository in `app/repository/repository.py`
     - Connection factory enabling `PRAGMA foreign_keys = ON`; schema initialization on startup
     - CRUD methods for profiles, skills, certifications, projects, resume (single row per profile), and analyses using bound `?` parameters only (no string-formatted SQL)
     - _Requirements: 16.1, 16.2, 16.3, 23.2_
