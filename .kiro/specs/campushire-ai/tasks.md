@@ -129,7 +129,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Verify records persist across a re-opened connection, cascade delete removes owned rows, and stored analyses read back unchanged
     - _Requirements: 16.2, 16.3, 13.1_
 
-  - [ ]* 8.4 Write SQL-injection-attempt example test
+  - [x]* 8.4 Write SQL-injection-attempt example test
     - Store a skill name containing `'; DROP TABLE skill; --`, read it back verbatim, and assert the table is intact
     - _Requirements: 23.2, 23.1_
 
