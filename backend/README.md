@@ -25,3 +25,23 @@ pip install -e ".[dev]"
 ```bash
 pytest
 ```
+
+## MCP server
+
+A small custom Model Context Protocol server lives in `mcp_server/`. It exposes
+read-only, deterministic tools over the analysis kernel:
+
+- `list_known_skills` — curated skill vocabulary (with version + count)
+- `normalize_skill` — wraps `skill_normalize`
+- `resolve_skill_alias` — maps a term/alias to its canonical skill name
+- `preview_required_skills` — runs `extract_required_skills` on job-description text
+
+Run it from this `backend/` directory (so both the `app` package and the `mcp`
+SDK resolve). It speaks MCP over stdio:
+
+```bash
+python -m mcp_server.server
+```
+
+Kiro launches it automatically via `.kiro/settings/mcp.json`. The package is
+named `mcp_server` (not `mcp`) so it does not shadow the installed `mcp` SDK.

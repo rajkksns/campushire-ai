@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "campushire-ai": {
+      "command": "python",
+      "args": ["-m", "mcp_server.server"],
+      "cwd": "backend",
+      "disabled": false,
+      "autoApprove": [
+        "list_known_skills",
+        "normalize_skill",
+        "resolve_skill_alias",
+        "preview_required_skills"
+      ]
+    }
+  }
+}

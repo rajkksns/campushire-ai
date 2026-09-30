@@ -123,3 +123,28 @@ suite (`python -m pytest tests/properties`) and confirm all properties still hol
 - Prefer running tests non-interactively (e.g. `--run` for watch-mode runners).
 - Do not create throwaway sanity/verify scripts in the repo; use inline checks or
   proper tests.
+
+## MCP integration
+
+The project ships a small custom Model Context Protocol server so Kiro can
+inspect the analyzer's building blocks on demand.
+
+- **Location:** `backend/mcp_server/` (`server.py` + `__init__.py`). Built with
+  `FastMCP` from the `mcp` SDK.
+- **Naming:** the package is `mcp_server`, deliberately **not** `mcp`, so it
+  never shadows the installed `mcp` SDK when launched from `backend/`.
+- **Nature:** a thin, read-only adapter over `app.kernel`. It does no database,
+  filesystem, or network I/O and mutates nothing; every tool is deterministic
+  because it just wraps kernel functions.
+- **Tools exposed:**
+  - `list_known_skills` — the curated skill vocabulary (with version + count).
+  - `normalize_skill` — wraps `skill_normalize`.
+  - `resolve_skill_alias` — maps a term/alias to its canonical skill name.
+  - `preview_required_skills` — runs `extract_required_skills` on JD text.
+- **Registration:** `.kiro/settings/mcp.json` launches it with
+  `python -m mcp_server.server` and `cwd: backend` (so both the `app` package
+  and the `mcp` SDK resolve).
+- **Run manually:** from `backend/`, `python -m mcp_server.server` (speaks MCP
+  over stdio). Reconnect from the Kiro MCP Server view after config changes.
+- **Rule:** keep MCP tools read-only and deterministic; put any real logic in
+  `app/kernel/`, not in the server module.
