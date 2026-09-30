@@ -1,18 +1,24 @@
-"""Parameterized SQLite repository (Requirements 16.1, 16.2, 16.3, 23.2).
+"""Parameterized SQLite repository (Task 8.2).
 
-This is a persistence adapter, not business logic: it stores and retrieves rows
-using bound ``?`` parameters exclusively (never string-formatted SQL, satisfying
-23.2). Validation, duplicate/precedence rules, and orchestration live in the
-service layer per the design's layered architecture.
+This module is the sole persistence adapter for CampusHire AI. It owns all
+SQLite access and follows two hard rules from the steering docs:
 
-Key behaviors:
-    * ``connect`` returns a connection with ``PRAGMA foreign_keys = ON`` so the
-      ``ON DELETE CASCADE`` foreign keys actually cascade (16.3).
-    * ``initialize`` executes the DDL in ``app/db/schema.sql`` (idempotent via
-      ``CREATE TABLE IF NOT EXISTS``), so a fresh database is ready on startup.
-    * A single ``Repository`` instance owns one connection to a database file (or
-      an in-memory database for tests). Data persists across restarts because the
-      file lives on disk / a mounted volume (16.2).
+* **All SQL uses bound ``?`` parameters** — never string-formatted SQL — so
+  user-controlled values can never be interpreted as SQL (Requirements 23.1,
+  23.2).
+* **Foreign keys are enforced per connection** via ``PRAGMA foreign_keys = ON``
+  so ``ON DELETE CASCADE`` removes all rows owned by a deleted profile
+  (Requirement 16.3).
+
+The schema is loaded from ``app/db/schema.sql`` and initialized on startup
+(Requirement 16.1). The repository stores and returns plain, immutable record
+dataclasses; it contains no analysis/business logic (that lives in the pure
+kernel and the service layer) — it is a thin I/O adapter per the layered
+dependency direction (routers → services → repository).
+
+Records survive process/container restarts because the database is a file on a
+mounted volume (Requirement 16.2); nothing here holds state beyond the open
+connection.
 """
 
 from __future__ import annotations
@@ -22,31 +28,41 @@ from dataclasses import dataclass
 from pathlib import Path
 
 __all__ = [
-    "ProfileRow",
-    "SkillRow",
-    "CertificationRow",
-    "ProjectRow",
-    "ResumeRow",
-    "AnalysisRow",
+    "ProfileRecord",
+    "SkillRecord",
+    "CertificationRecord",
+    "ProjectRecord",
+    "ResumeRecord",
+    "AnalysisRecord",
     "Repository",
 ]
 
-# Location of the schema DDL relative to this file: app/repository/ -> app/db/.
 _SCHEMA_PATH = Path(__file__).resolve().parent.parent / "db" / "schema.sql"
 
 
-# ---------------------------------------------------------------------------
-# Row dataclasses — plain data carriers mirroring the schema tables.
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
+# Record types
+#
+# Plain, immutable row projections. These mirror the columns in schema.sql and
+# carry no behavior; they exist so callers (the service layer) get typed data
+# instead of raw tuples/rows. They are deliberately independent of the kernel
+# dataclasses so persistence and analysis stay decoupled.
+# --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
-class ProfileRow:
+class ProfileRecord:
+    """A ``student_profile`` row."""
+
     id: str
     name: str
     created_at: str
 
 
 @dataclass(frozen=True)
-class SkillRow:
+class SkillRecord:
+    """A ``skill`` row. ``normalized`` is ``skill_normalize(name)`` supplied by
+    the caller (the service layer), keeping normalization a single kernel rule.
+    """
+
     id: str
     profile_id: str
     name: str
@@ -56,14 +72,18 @@ class SkillRow:
 
 
 @dataclass(frozen=True)
-class CertificationRow:
+class CertificationRecord:
+    """A ``certification`` row."""
+
     id: str
     profile_id: str
     name: str
 
 
 @dataclass(frozen=True)
-class ProjectRow:
+class ProjectRecord:
+    """An ``academic_project`` row."""
+
     id: str
     profile_id: str
     title: str
@@ -71,14 +91,21 @@ class ProjectRow:
 
 
 @dataclass(frozen=True)
-class ResumeRow:
+class ResumeRecord:
+    """A ``resume`` row (exactly one per profile)."""
+
     profile_id: str
     content: str
     updated_at: str
 
 
 @dataclass(frozen=True)
-class AnalysisRow:
+class AnalysisRecord:
+    """An ``analysis`` row. The derived JSON columns store the fully
+    materialized result so it can be read back without recomputation
+    (Requirements 13.1–13.4).
+    """
+
     id: str
     profile_id: str
     job_description: str
@@ -89,276 +116,311 @@ class AnalysisRow:
     created_at: str
 
 
+# --------------------------------------------------------------------------- #
+# Repository
+# --------------------------------------------------------------------------- #
 class Repository:
-    """Owns a single SQLite connection and exposes parameterized CRUD methods.
+    """Parameterized SQLite data-access layer.
 
-    Args:
-        database_path: Filesystem path to the SQLite database, or ``":memory:"``
-            for an ephemeral in-memory database (useful in tests).
+    A single instance owns one :class:`sqlite3.Connection`. Every method uses
+    bound ``?`` parameters exclusively. ``PRAGMA foreign_keys = ON`` is enabled
+    on the connection so cascade deletes work as declared in the schema.
     """
 
-    def __init__(self, database_path: str = ":memory:") -> None:
-        self._database_path = database_path
-        self._conn = self._connect(database_path)
+    def __init__(self, database_path: str) -> None:
+        """Open (or create) the database at ``database_path``.
 
-    # -- connection / lifecycle ---------------------------------------------
-    @staticmethod
-    def _connect(database_path: str) -> sqlite3.Connection:
-        """Open a connection with foreign-key enforcement and row access by name.
-
-        ``PRAGMA foreign_keys = ON`` is required per connection for the
-        ``ON DELETE CASCADE`` constraints to take effect (16.3).
+        Args:
+            database_path: Filesystem path to the SQLite file, or
+                ``":memory:"`` for an ephemeral database (used by tests). The
+                path is passed straight to :func:`sqlite3.connect`; it is not a
+                SQL value, so there is no injection surface here.
         """
-        conn = sqlite3.connect(database_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        return conn
+        # check_same_thread=False keeps the connection usable from FastAPI's
+        # threadpool workers; access is otherwise serialized by SQLite.
+        self._conn = sqlite3.connect(database_path, check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+        # Enforce foreign keys for THIS connection so ON DELETE CASCADE fires
+        # (Requirement 16.3). PRAGMA cannot be parameterized and takes no user
+        # input, so a literal statement is correct and safe here.
+        self._conn.execute("PRAGMA foreign_keys = ON")
 
-    @property
-    def connection(self) -> sqlite3.Connection:
-        """The underlying SQLite connection."""
-        return self._conn
+    # -- lifecycle -------------------------------------------------------- #
+    def initialize_schema(self) -> None:
+        """Create all tables/indexes if absent by executing ``schema.sql``.
 
-    def initialize(self) -> None:
-        """Create the schema if it does not already exist (idempotent).
-
-        Executes the DDL in ``app/db/schema.sql``. Safe to call on every startup
-        because the DDL uses ``CREATE TABLE IF NOT EXISTS``.
+        Idempotent: the DDL uses ``CREATE TABLE IF NOT EXISTS`` so calling this
+        on startup is safe whether the database is new or already populated
+        (Requirement 16.1).
         """
         ddl = _SCHEMA_PATH.read_text(encoding="utf-8")
-        self._conn.executescript(ddl)
-        self._conn.commit()
+        with self._conn:
+            self._conn.executescript(ddl)
 
     def close(self) -> None:
         """Close the underlying connection."""
         self._conn.close()
 
-    # -- Student_Profile ----------------------------------------------------
-    def create_profile(self, profile: ProfileRow) -> ProfileRow:
-        self._conn.execute(
-            "INSERT INTO student_profile (id, name, created_at) VALUES (?, ?, ?)",
-            (profile.id, profile.name, profile.created_at),
-        )
-        self._conn.commit()
+    def __enter__(self) -> Repository:
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        self.close()
+
+    # -- profiles --------------------------------------------------------- #
+    def create_profile(self, profile: ProfileRecord) -> ProfileRecord:
+        """Insert a new profile and return it."""
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO student_profile (id, name, created_at) "
+                "VALUES (?, ?, ?)",
+                (profile.id, profile.name, profile.created_at),
+            )
         return profile
 
-    def get_profile(self, profile_id: str) -> ProfileRow | None:
+    def get_profile(self, profile_id: str) -> ProfileRecord | None:
+        """Return the profile with ``profile_id`` or ``None`` if absent."""
         row = self._conn.execute(
             "SELECT id, name, created_at FROM student_profile WHERE id = ?",
             (profile_id,),
         ).fetchone()
-        return _to_profile(row) if row else None
+        return _to_profile(row) if row is not None else None
 
-    def update_profile_name(self, profile_id: str, name: str) -> ProfileRow | None:
-        cur = self._conn.execute(
-            "UPDATE student_profile SET name = ? WHERE id = ?",
-            (name, profile_id),
-        )
-        self._conn.commit()
-        if cur.rowcount == 0:
-            return None
-        return self.get_profile(profile_id)
+    def list_profiles(self) -> list[ProfileRecord]:
+        """Return all profiles ordered by name then id (deterministic)."""
+        rows = self._conn.execute(
+            "SELECT id, name, created_at FROM student_profile "
+            "ORDER BY name ASC, id ASC"
+        ).fetchall()
+        return [_to_profile(r) for r in rows]
 
-    def delete_profile(self, profile_id: str) -> bool:
-        """Delete a profile; cascades remove all owned rows (16.3)."""
-        cur = self._conn.execute(
-            "DELETE FROM student_profile WHERE id = ?", (profile_id,)
-        )
-        self._conn.commit()
+    def update_profile_name(self, profile_id: str, name: str) -> bool:
+        """Rename a profile. Returns ``True`` if a row was updated."""
+        with self._conn:
+            cur = self._conn.execute(
+                "UPDATE student_profile SET name = ? WHERE id = ?",
+                (name, profile_id),
+            )
         return cur.rowcount > 0
 
-    # -- Skill --------------------------------------------------------------
-    def add_skill(self, skill: SkillRow) -> SkillRow:
-        """Insert a skill. Raises ``sqlite3.IntegrityError`` on a case-insensitive
-        duplicate of the same type on the same profile (the UNIQUE constraint);
-        the service layer maps that to a 409 conflict."""
-        self._conn.execute(
-            "INSERT INTO skill (id, profile_id, name, normalized, skill_type, "
-            "proficiency) VALUES (?, ?, ?, ?, ?, ?)",
-            (
-                skill.id,
-                skill.profile_id,
-                skill.name,
-                skill.normalized,
-                skill.skill_type,
-                skill.proficiency,
-            ),
-        )
-        self._conn.commit()
+    def delete_profile(self, profile_id: str) -> bool:
+        """Delete a profile; owned rows cascade. Returns ``True`` if removed."""
+        with self._conn:
+            cur = self._conn.execute(
+                "DELETE FROM student_profile WHERE id = ?",
+                (profile_id,),
+            )
+        return cur.rowcount > 0
+
+    # -- skills ----------------------------------------------------------- #
+    def add_skill(self, skill: SkillRecord) -> SkillRecord:
+        """Insert a skill.
+
+        Raises:
+            sqlite3.IntegrityError: if the ``(profile_id, skill_type,
+                normalized)`` uniqueness constraint is violated. The service
+                layer maps this to a 409 conflict (Requirement 2.6).
+        """
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO skill "
+                "(id, profile_id, name, normalized, skill_type, proficiency) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    skill.id,
+                    skill.profile_id,
+                    skill.name,
+                    skill.normalized,
+                    skill.skill_type,
+                    skill.proficiency,
+                ),
+            )
         return skill
 
-    def get_skill(self, skill_id: str) -> SkillRow | None:
+    def get_skill(self, skill_id: str) -> SkillRecord | None:
+        """Return a single skill by id, or ``None``."""
         row = self._conn.execute(
             "SELECT id, profile_id, name, normalized, skill_type, proficiency "
             "FROM skill WHERE id = ?",
             (skill_id,),
         ).fetchone()
-        return _to_skill(row) if row else None
+        return _to_skill(row) if row is not None else None
 
-    def list_skills(self, profile_id: str) -> list[SkillRow]:
+    def list_skills(self, profile_id: str) -> list[SkillRecord]:
+        """Return a profile's skills in a deterministic order."""
         rows = self._conn.execute(
             "SELECT id, profile_id, name, normalized, skill_type, proficiency "
-            "FROM skill WHERE profile_id = ? ORDER BY skill_type, normalized",
+            "FROM skill WHERE profile_id = ? "
+            "ORDER BY skill_type ASC, normalized ASC, id ASC",
             (profile_id,),
         ).fetchall()
         return [_to_skill(r) for r in rows]
 
-    def skill_exists(
-        self, profile_id: str, skill_type: str, normalized: str
-    ) -> bool:
-        """Whether a same-type skill with this normalized name already exists.
-
-        Lets the service check duplicates explicitly (for 409) rather than
-        relying solely on the IntegrityError.
-        """
+    def skill_exists(self, skill_type: str, normalized: str, profile_id: str) -> bool:
+        """Return whether a same-type, same-normalized skill already exists."""
         row = self._conn.execute(
-            "SELECT 1 FROM skill WHERE profile_id = ? AND skill_type = ? "
-            "AND normalized = ? LIMIT 1",
+            "SELECT 1 FROM skill "
+            "WHERE profile_id = ? AND skill_type = ? AND normalized = ? "
+            "LIMIT 1",
             (profile_id, skill_type, normalized),
         ).fetchone()
         return row is not None
 
-    def delete_skill(self, skill_id: str) -> bool:
-        cur = self._conn.execute("DELETE FROM skill WHERE id = ?", (skill_id,))
-        self._conn.commit()
+    def delete_skill(self, profile_id: str, skill_id: str) -> bool:
+        """Delete a skill owned by ``profile_id``. Returns ``True`` if removed."""
+        with self._conn:
+            cur = self._conn.execute(
+                "DELETE FROM skill WHERE id = ? AND profile_id = ?",
+                (skill_id, profile_id),
+            )
         return cur.rowcount > 0
 
-    # -- Certification ------------------------------------------------------
-    def add_certification(self, cert: CertificationRow) -> CertificationRow:
-        self._conn.execute(
-            "INSERT INTO certification (id, profile_id, name) VALUES (?, ?, ?)",
-            (cert.id, cert.profile_id, cert.name),
-        )
-        self._conn.commit()
+    # -- certifications --------------------------------------------------- #
+    def add_certification(self, cert: CertificationRecord) -> CertificationRecord:
+        """Insert a certification."""
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO certification (id, profile_id, name) "
+                "VALUES (?, ?, ?)",
+                (cert.id, cert.profile_id, cert.name),
+            )
         return cert
 
-    def get_certification(self, cert_id: str) -> CertificationRow | None:
-        row = self._conn.execute(
-            "SELECT id, profile_id, name FROM certification WHERE id = ?",
-            (cert_id,),
-        ).fetchone()
-        return _to_certification(row) if row else None
-
-    def list_certifications(self, profile_id: str) -> list[CertificationRow]:
+    def list_certifications(self, profile_id: str) -> list[CertificationRecord]:
+        """Return a profile's certifications in a deterministic order."""
         rows = self._conn.execute(
-            "SELECT id, profile_id, name FROM certification WHERE profile_id = ? "
-            "ORDER BY name",
+            "SELECT id, profile_id, name FROM certification "
+            "WHERE profile_id = ? ORDER BY name ASC, id ASC",
             (profile_id,),
         ).fetchall()
         return [_to_certification(r) for r in rows]
 
-    def delete_certification(self, cert_id: str) -> bool:
-        cur = self._conn.execute(
-            "DELETE FROM certification WHERE id = ?", (cert_id,)
-        )
-        self._conn.commit()
+    def delete_certification(self, profile_id: str, cert_id: str) -> bool:
+        """Delete a certification owned by ``profile_id``."""
+        with self._conn:
+            cur = self._conn.execute(
+                "DELETE FROM certification WHERE id = ? AND profile_id = ?",
+                (cert_id, profile_id),
+            )
         return cur.rowcount > 0
 
-    # -- Academic_Project ---------------------------------------------------
-    def add_project(self, project: ProjectRow) -> ProjectRow:
-        self._conn.execute(
-            "INSERT INTO academic_project (id, profile_id, title, description) "
-            "VALUES (?, ?, ?, ?)",
-            (project.id, project.profile_id, project.title, project.description),
-        )
-        self._conn.commit()
+    # -- projects --------------------------------------------------------- #
+    def add_project(self, project: ProjectRecord) -> ProjectRecord:
+        """Insert an academic project."""
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO academic_project (id, profile_id, title, description) "
+                "VALUES (?, ?, ?, ?)",
+                (project.id, project.profile_id, project.title, project.description),
+            )
         return project
 
-    def get_project(self, project_id: str) -> ProjectRow | None:
-        row = self._conn.execute(
-            "SELECT id, profile_id, title, description FROM academic_project "
-            "WHERE id = ?",
-            (project_id,),
-        ).fetchone()
-        return _to_project(row) if row else None
-
-    def list_projects(self, profile_id: str) -> list[ProjectRow]:
+    def list_projects(self, profile_id: str) -> list[ProjectRecord]:
+        """Return a profile's projects in a deterministic order."""
         rows = self._conn.execute(
             "SELECT id, profile_id, title, description FROM academic_project "
-            "WHERE profile_id = ? ORDER BY title",
+            "WHERE profile_id = ? ORDER BY title ASC, id ASC",
             (profile_id,),
         ).fetchall()
         return [_to_project(r) for r in rows]
 
-    def delete_project(self, project_id: str) -> bool:
-        cur = self._conn.execute(
-            "DELETE FROM academic_project WHERE id = ?", (project_id,)
-        )
-        self._conn.commit()
+    def delete_project(self, profile_id: str, project_id: str) -> bool:
+        """Delete a project owned by ``profile_id``."""
+        with self._conn:
+            cur = self._conn.execute(
+                "DELETE FROM academic_project WHERE id = ? AND profile_id = ?",
+                (project_id, profile_id),
+            )
         return cur.rowcount > 0
 
-    # -- Resume (single row per profile, 5.6) -------------------------------
-    def upsert_resume(self, resume: ResumeRow) -> ResumeRow:
-        """Insert or replace the resume for a profile (one row per profile).
+    # -- resume (single row per profile) ---------------------------------- #
+    def upsert_resume(self, resume: ResumeRecord) -> ResumeRecord:
+        """Insert or replace the profile's single resume (Requirement 5.6).
 
-        Uses an explicit UPSERT on the ``profile_id`` primary key so submitting a
-        new resume replaces the prior text (Requirement 5.6).
+        The ``resume`` table is keyed by ``profile_id``; an ``ON CONFLICT``
+        upsert replaces any prior content so exactly one resume exists per
+        profile.
         """
-        self._conn.execute(
-            "INSERT INTO resume (profile_id, content, updated_at) "
-            "VALUES (?, ?, ?) "
-            "ON CONFLICT(profile_id) DO UPDATE SET "
-            "content = excluded.content, updated_at = excluded.updated_at",
-            (resume.profile_id, resume.content, resume.updated_at),
-        )
-        self._conn.commit()
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO resume (profile_id, content, updated_at) "
+                "VALUES (?, ?, ?) "
+                "ON CONFLICT(profile_id) DO UPDATE SET "
+                "content = excluded.content, updated_at = excluded.updated_at",
+                (resume.profile_id, resume.content, resume.updated_at),
+            )
         return resume
 
-    def get_resume(self, profile_id: str) -> ResumeRow | None:
+    def get_resume(self, profile_id: str) -> ResumeRecord | None:
+        """Return the profile's resume, or ``None`` if none exists."""
         row = self._conn.execute(
             "SELECT profile_id, content, updated_at FROM resume WHERE profile_id = ?",
             (profile_id,),
         ).fetchone()
-        return _to_resume(row) if row else None
+        return _to_resume(row) if row is not None else None
 
-    # -- Analysis -----------------------------------------------------------
-    def create_analysis(self, analysis: AnalysisRow) -> AnalysisRow:
-        self._conn.execute(
-            "INSERT INTO analysis (id, profile_id, job_description, "
-            "readiness_score, breakdown_json, categorization_json, roadmap_json, "
-            "created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                analysis.id,
-                analysis.profile_id,
-                analysis.job_description,
-                analysis.readiness_score,
-                analysis.breakdown_json,
-                analysis.categorization_json,
-                analysis.roadmap_json,
-                analysis.created_at,
-            ),
-        )
-        self._conn.commit()
+    def delete_resume(self, profile_id: str) -> bool:
+        """Delete the profile's resume. Returns ``True`` if one was removed."""
+        with self._conn:
+            cur = self._conn.execute(
+                "DELETE FROM resume WHERE profile_id = ?",
+                (profile_id,),
+            )
+        return cur.rowcount > 0
+
+    # -- analyses --------------------------------------------------------- #
+    def create_analysis(self, analysis: AnalysisRecord) -> AnalysisRecord:
+        """Persist a fully materialized analysis (Requirements 13.1–13.4)."""
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO analysis "
+                "(id, profile_id, job_description, readiness_score, "
+                "breakdown_json, categorization_json, roadmap_json, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    analysis.id,
+                    analysis.profile_id,
+                    analysis.job_description,
+                    analysis.readiness_score,
+                    analysis.breakdown_json,
+                    analysis.categorization_json,
+                    analysis.roadmap_json,
+                    analysis.created_at,
+                ),
+            )
         return analysis
 
-    def get_analysis(self, analysis_id: str) -> AnalysisRow | None:
+    def get_analysis(self, analysis_id: str) -> AnalysisRecord | None:
+        """Return a persisted analysis by id, or ``None`` (Requirement 13.2)."""
         row = self._conn.execute(
             "SELECT id, profile_id, job_description, readiness_score, "
             "breakdown_json, categorization_json, roadmap_json, created_at "
             "FROM analysis WHERE id = ?",
             (analysis_id,),
         ).fetchone()
-        return _to_analysis(row) if row else None
+        return _to_analysis(row) if row is not None else None
 
-    def list_analyses(self, profile_id: str) -> list[AnalysisRow]:
+    def list_analyses(self, profile_id: str) -> list[AnalysisRecord]:
+        """Return a profile's analyses, newest first, id-tiebroken (13.4)."""
         rows = self._conn.execute(
             "SELECT id, profile_id, job_description, readiness_score, "
             "breakdown_json, categorization_json, roadmap_json, created_at "
-            "FROM analysis WHERE profile_id = ? ORDER BY created_at, id",
+            "FROM analysis WHERE profile_id = ? "
+            "ORDER BY created_at DESC, id ASC",
             (profile_id,),
         ).fetchall()
         return [_to_analysis(r) for r in rows]
 
 
-# ---------------------------------------------------------------------------
-# Row -> dataclass mappers (kept module-private for clarity).
-# ---------------------------------------------------------------------------
-def _to_profile(row: sqlite3.Row) -> ProfileRow:
-    return ProfileRow(id=row["id"], name=row["name"], created_at=row["created_at"])
+# --------------------------------------------------------------------------- #
+# Row → record mappers (single place each column list is projected)
+# --------------------------------------------------------------------------- #
+def _to_profile(row: sqlite3.Row) -> ProfileRecord:
+    return ProfileRecord(id=row["id"], name=row["name"], created_at=row["created_at"])
 
 
-def _to_skill(row: sqlite3.Row) -> SkillRow:
-    return SkillRow(
+def _to_skill(row: sqlite3.Row) -> SkillRecord:
+    return SkillRecord(
         id=row["id"],
         profile_id=row["profile_id"],
         name=row["name"],
@@ -368,14 +430,14 @@ def _to_skill(row: sqlite3.Row) -> SkillRow:
     )
 
 
-def _to_certification(row: sqlite3.Row) -> CertificationRow:
-    return CertificationRow(
+def _to_certification(row: sqlite3.Row) -> CertificationRecord:
+    return CertificationRecord(
         id=row["id"], profile_id=row["profile_id"], name=row["name"]
     )
 
 
-def _to_project(row: sqlite3.Row) -> ProjectRow:
-    return ProjectRow(
+def _to_project(row: sqlite3.Row) -> ProjectRecord:
+    return ProjectRecord(
         id=row["id"],
         profile_id=row["profile_id"],
         title=row["title"],
@@ -383,16 +445,16 @@ def _to_project(row: sqlite3.Row) -> ProjectRow:
     )
 
 
-def _to_resume(row: sqlite3.Row) -> ResumeRow:
-    return ResumeRow(
+def _to_resume(row: sqlite3.Row) -> ResumeRecord:
+    return ResumeRecord(
         profile_id=row["profile_id"],
         content=row["content"],
         updated_at=row["updated_at"],
     )
 
 
-def _to_analysis(row: sqlite3.Row) -> AnalysisRow:
-    return AnalysisRow(
+def _to_analysis(row: sqlite3.Row) -> AnalysisRecord:
+    return AnalysisRecord(
         id=row["id"],
         profile_id=row["profile_id"],
         job_description=row["job_description"],
