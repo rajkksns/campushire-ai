@@ -37,7 +37,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Return empty list as a valid outcome (no error) when no vocabulary hits
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
 
-  - [-] 3.3 Implement `extract_resume_skills`
+  - [x] 3.3 Implement `extract_resume_skills`
     - Derive normalized candidate skill names from resume text using the same vocabulary and normalization; accept `None`/empty input
     - _Requirements: 8.1, 5.2_
 
@@ -50,7 +50,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - **Validates: Requirements 7.5**
 
 - [ ] 4. Implement the Skill_Comparator
-  - [ ] 4.1 Implement categories, dataclasses, and `compare` in `app/kernel/comparator.py`
+  - [-] 4.1 Implement categories, dataclasses, and `compare` in `app/kernel/comparator.py`
     - Define `Category` enum, `StudentSkill`, `ComparedSkill`, and `PROFICIENCY_THRESHOLD = 3`
     - Build a normalized-name → max-proficiency map over the union of declared + resume-derived skills (order-invariant)
     - Categorize each required skill: matched (proficiency ≥ 3), weak (proficiency < 3), missing (no match); sort output by normalized name
