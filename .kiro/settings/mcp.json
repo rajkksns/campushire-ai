@@ -11,6 +11,13 @@
         "resolve_skill_alias",
         "preview_required_skills"
       ]
+    },
+    "skill-gap-report": {
+      "command": "python",
+      "args": ["../.kiro/powers/skill-gap-report/server/report_power.py"],
+      "cwd": "backend",
+      "disabled": false,
+      "autoApprove": ["generate_skill_gap_report"]
     }
   }
 }

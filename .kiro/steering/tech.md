@@ -148,3 +148,23 @@ inspect the analyzer's building blocks on demand.
   over stdio). Reconnect from the Kiro MCP Server view after config changes.
 - **Rule:** keep MCP tools read-only and deterministic; put any real logic in
   `app/kernel/`, not in the server module.
+
+## Powers
+
+The project ships a reusable Kiro Power that packages an end-to-end analysis
+workflow.
+
+- **`skill-gap-report`** (`.kiro/powers/skill-gap-report/`) — takes a student
+  profile (declared skills + optional resume text) and a target job description
+  and returns a placement-readiness summary: readiness score, score breakdown,
+  matched/weak/missing groups, and a prioritized roadmap.
+- It is packaged as `POWER.md` (docs), `power.json` (metadata + MCP
+  registration), `server/report_power.py` (a FastMCP server), and a steering
+  guide under `steering/`.
+- It exposes one tool, `generate_skill_gap_report`, registered as the
+  `skill-gap-report` MCP server in `.kiro/settings/mcp.json`.
+- **It reuses `app.kernel` and adds no business logic**, so the determinism and
+  transparency guarantees are inherited unchanged. To alter analysis behavior,
+  change the kernel (and its property tests), not the Power.
+- Run its server from `backend/`:
+  `python ../.kiro/powers/skill-gap-report/server/report_power.py`.

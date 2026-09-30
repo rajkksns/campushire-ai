@@ -1,0 +1,25 @@
+{
+  "name": "skill-gap-report",
+  "displayName": "Skill Gap Report",
+  "version": "1.0.0",
+  "description": "Produce a transparent, deterministic placement-readiness summary for a CampusHire AI student profile against a target job description, reusing the existing analysis kernel.",
+  "keywords": [
+    "skill-gap",
+    "placement readiness",
+    "readiness score",
+    "campushire",
+    "roadmap"
+  ],
+  "steeringFiles": [
+    "steering/skill-gap-report-guide.md"
+  ],
+  "mcpServers": {
+    "skill-gap-report": {
+      "command": "python",
+      "args": ["../.kiro/powers/skill-gap-report/server/report_power.py"],
+      "cwd": "backend",
+      "disabled": false,
+      "autoApprove": ["generate_skill_gap_report"]
+    }
+  }
+}
