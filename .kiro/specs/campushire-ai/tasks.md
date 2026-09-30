@@ -125,7 +125,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - CRUD methods for profiles, skills, certifications, projects, resume (single row per profile), and analyses using bound `?` parameters only (no string-formatted SQL)
     - _Requirements: 16.1, 16.2, 16.3, 23.2_
 
-  - [ ]* 8.3 Write integration tests for persistence, cascade delete, and restart durability
+  - [x]* 8.3 Write integration tests for persistence, cascade delete, and restart durability
     - Verify records persist across a re-opened connection, cascade delete removes owned rows, and stored analyses read back unchanged
     - _Requirements: 16.2, 16.3, 13.1_
 
