@@ -30,14 +30,14 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Static canonical-name → alias-set dictionary versioned in source control for reproducibility
     - _Requirements: 7.1, 7.5_
 
-  - [ ] 3.2 Implement `RequiredSkill` dataclass and `extract_required_skills`
+  - [x] 3.2 Implement `RequiredSkill` dataclass and `extract_required_skills`
     - Whole-token, case-insensitive matching against vocabulary + aliases
     - Deterministic weighting signals (frequency bucketed 1–5, required/must-have boost) clamped to 1..5
     - Normalize names via `skill_normalize`, de-duplicate case-insensitively keeping highest weight, sort by normalized name
     - Return empty list as a valid outcome (no error) when no vocabulary hits
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
 
-  - [ ] 3.3 Implement `extract_resume_skills`
+  - [-] 3.3 Implement `extract_resume_skills`
     - Derive normalized candidate skill names from resume text using the same vocabulary and normalization; accept `None`/empty input
     - _Requirements: 8.1, 5.2_
 

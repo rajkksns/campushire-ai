@@ -488,3 +488,74 @@ def extract_required_skills(job_description: str) -> list[RequiredSkill]:
     return [
         RequiredSkill(name=name, weight=best[name]) for name in sorted(best)
     ]
+
+
+# ---------------------------------------------------------------------------
+# Subtask 3.3: extract_resume_skills
+# ---------------------------------------------------------------------------
+# Derives the set of candidate skill names a resume mentions, using the exact
+# same curated vocabulary, normalization, and whole-token matching rules as
+# required-skill extraction. This keeps declared skills, resume-derived skills,
+# and required skills comparable under one rule (Requirements 8.1, 5.2). Like
+# the rest of the kernel it is pure and deterministic: standard library + the
+# sibling normalize helper only, no randomness/clock/network/I/O, so identical
+# resume text always yields an identical result.
+
+__all__ += ["extract_resume_skills"]
+
+
+def extract_resume_skills(resume_text: str | None) -> list[str]:
+    """Deterministically derive candidate skill names from resume text.
+
+    Uses the same curated vocabulary, :func:`skill_normalize` rule, and
+    whole-token, case-insensitive matching as :func:`extract_required_skills`
+    so resume-derived skills compare consistently with declared and required
+    skills (Requirements 8.1, 5.2). Unlike required-skill extraction, no
+    importance weighting is applied: a resume merely evidences that a candidate
+    *has* a skill, so this returns the plain set of matched canonical names.
+
+    Procedure:
+
+    1. Return an empty list immediately for ``None`` or empty/whitespace-only
+       input (a resume-less profile is a valid, non-error case).
+    2. Normalize the whole text once (7.4) so matching shares the exact
+       case/whitespace rule used everywhere else.
+    3. Scan for every vocabulary term (canonical name or alias) as a whole
+       token; attribute each hit to its canonical skill name. Longer terms are
+       matched first and their spans blanked, so a shorter overlapping term
+       (e.g. ``c`` inside ``c++``) cannot re-match — identical to the
+       required-skill scan.
+    4. De-duplicate (the canonical names are already normalized) and return
+       them sorted ascending for a stable, deterministic order.
+
+    Args:
+        resume_text: Raw resume text, or ``None``. Empty/whitespace-only input
+            yields an empty list.
+
+    Returns:
+        A sorted list of unique, normalized canonical skill names. Empty when
+        the resume is absent or mentions no known skills.
+    """
+    if not resume_text:
+        return []
+
+    text = skill_normalize(resume_text)
+    if not text:
+        return []
+
+    found: set[str] = set()
+
+    # Mutable scan buffer: once a term claims a span we blank it so a shorter
+    # overlapping term cannot re-match inside it (whole-token guarantee). Uses
+    # the same longest-first _TERM_MATCHERS ordering as extract_required_skills.
+    scan = list(text)
+
+    for pattern, canonical in _TERM_MATCHERS:
+        for match in pattern.finditer("".join(scan)):
+            start, end = match.span()
+            found.add(canonical)
+            for i in range(start, end):
+                scan[i] = " "
+
+    # Canonical names are already normalized; sort for a deterministic order.
+    return sorted(found)
