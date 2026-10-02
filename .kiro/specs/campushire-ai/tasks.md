@@ -134,7 +134,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - _Requirements: 23.2, 23.1_
 
 - [ ] 9. Implement Pydantic request/response schemas
-  - [-] 9.1 Define request/response models in `app/schemas/`
+  - [x] 9.1 Define request/response models in `app/schemas/`
     - Profile create/update, skill add (type + proficiency default 1), certification, project, resume, analysis request/response, and error response shapes
     - Field validators: non-empty/whitespace-trimmed names and titles, proficiency integer 1..5, job description non-empty and ≤ 20000 chars
     - _Requirements: 1.1, 1.2, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 4.1, 4.2, 4.3, 6.1, 6.2, 6.3, 15.2, 15.3, 18.2, 23.1_
@@ -143,17 +143,17 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Whitespace-only names/titles, proficiency out of range, JD length boundary at 20000, missing proficiency defaulting to 1
     - _Requirements: 1.2, 2.4, 2.5, 3.2, 4.2, 6.3_
 
-- [ ] 10. Implement the service layer
-  - [ ] 10.1 Implement `ProfileService` in `app/services/profile_service.py`
+- [-] 10. Implement the service layer
+  - [-] 10.1 Implement `ProfileService` in `app/services/profile_service.py`
     - CRUD for profiles, skills, certifications, projects; enforce default proficiency 1 and case-insensitive duplicate rejection; parent-existence checks so 404 precedes 409
     - _Requirements: 1.1, 1.3, 1.5, 2.1, 2.2, 2.5, 2.6, 2.7, 3.1, 3.3, 4.1, 4.4, 15.5_
 
-  - [ ] 10.2 Implement `ResumeService` in `app/services/resume_service.py`
+  - [-] 10.2 Implement `ResumeService` in `app/services/resume_service.py`
     - Accept pasted text or uploaded file; ordered guards — media type (`text/plain`/`application/pdf`) else 415, size ≤ 5 MB else 413, resulting text non-empty else 422; PDF text extraction via `pypdf`, passthrough for plain text; replace existing resume
     - Persist nothing when any guard fails
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-  - [ ] 10.3 Implement `AnalysisService` in `app/services/analysis_service.py`
+  - [-] 10.3 Implement `AnalysisService` in `app/services/analysis_service.py`
     - Load profile skills + resume, run extractor → comparator → scoring → roadmap, assemble result, persist the `Analysis`, and expose retrieval + list operations
     - Return a valid analysis flagged "no required skills identified" with score 0 when extraction yields nothing
     - _Requirements: 6.1, 7.6, 8.1, 10.12, 11.1, 11.2, 13.1, 13.2, 13.4_
