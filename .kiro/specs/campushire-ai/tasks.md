@@ -134,7 +134,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - _Requirements: 23.2, 23.1_
 
 - [ ] 9. Implement Pydantic request/response schemas
-  - [ ] 9.1 Define request/response models in `app/schemas/`
+  - [-] 9.1 Define request/response models in `app/schemas/`
     - Profile create/update, skill add (type + proficiency default 1), certification, project, resume, analysis request/response, and error response shapes
     - Field validators: non-empty/whitespace-trimmed names and titles, proficiency integer 1..5, job description non-empty and ≤ 20000 chars
     - _Requirements: 1.1, 1.2, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 4.1, 4.2, 4.3, 6.1, 6.2, 6.3, 15.2, 15.3, 18.2, 23.1_
