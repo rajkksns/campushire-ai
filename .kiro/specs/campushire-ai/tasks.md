@@ -25,7 +25,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - **Validates: Requirements 7.4, 2.6**
     - Place in `tests/properties/test_normalize_properties.py`, min 100 iterations, tagged with the property number
 
-- [ ] 3. Implement the Skill_Extractor and curated vocabulary
+- [x] 3. Implement the Skill_Extractor and curated vocabulary
   - [x] 3.1 Define the curated skill vocabulary and alias table in `app/kernel/extractor.py`
     - Static canonical-name → alias-set dictionary versioned in source control for reproducibility
     - _Requirements: 7.1, 7.5_
@@ -49,7 +49,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - **Property 3: Extraction is deterministic**
     - **Validates: Requirements 7.5**
 
-- [ ] 4. Implement the Skill_Comparator
+- [x] 4. Implement the Skill_Comparator
   - [x] 4.1 Implement categories, dataclasses, and `compare` in `app/kernel/comparator.py`
     - Define `Category` enum, `StudentSkill`, `ComparedSkill`, and `PROFICIENCY_THRESHOLD = 3`
     - Build a normalized-name → max-proficiency map over the union of declared + resume-derived skills (order-invariant)
@@ -65,7 +65,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - **Property 5: Comparison is deterministic and order-invariant**
     - **Validates: Requirements 9.1, 9.2, 9.3**
 
-- [ ] 5. Implement the Scoring_Engine (largest-remainder / Hamilton)
+- [x] 5. Implement the Scoring_Engine (largest-remainder / Hamilton)
   - [x] 5.1 Implement scoring dataclasses and the deterministic allocation in `app/kernel/scoring.py`
     - Define `BreakdownItem`, `ScoreResult`, and `CATEGORY_FACTOR` (matched 1.0, weak 0.5, missing 0.0)
     - Handle degenerate cases: empty required set → score 0 + empty breakdown; all-matched → 100; all-missing → 0
@@ -102,7 +102,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Assert the exact remainder-distribution outcome on a hand-computed example and a weighted-proportionality example
     - _Requirements: 10.4, 10.11_
 
-- [ ] 6. Implement the Roadmap_Generator
+- [x] 6. Implement the Roadmap_Generator
   - [x] 6.1 Implement `RoadmapItem` and `generate` in `app/kernel/roadmap.py`
     - One item per missing and weak skill; exclude matched skills
     - Sort by weight desc, then missing before weak, then normalized name asc; assign `priority_rank` 1..N
@@ -115,7 +115,7 @@ The build order follows the layered architecture: shared kernel first (normalize
 - [x] 7. Checkpoint - pure kernel complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. Implement SQLite schema and parameterized repository
+- [x] 8. Implement SQLite schema and parameterized repository
   - [x] 8.1 Author the database schema DDL in `app/db/schema.sql`
     - Define `student_profile`, `skill`, `certification`, `academic_project`, `resume`, `analysis` tables with CHECK constraints, `ON DELETE CASCADE` foreign keys, and the case-insensitive skill uniqueness constraint
     - _Requirements: 16.1, 16.3, 2.6_
@@ -133,7 +133,7 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Store a skill name containing `'; DROP TABLE skill; --`, read it back verbatim, and assert the table is intact
     - _Requirements: 23.2, 23.1_
 
-- [ ] 9. Implement Pydantic request/response schemas
+- [x] 9. Implement Pydantic request/response schemas
   - [x] 9.1 Define request/response models in `app/schemas/`
     - Profile create/update, skill add (type + proficiency default 1), certification, project, resume, analysis request/response, and error response shapes
     - Field validators: non-empty/whitespace-trimmed names and titles, proficiency integer 1..5, job description non-empty and ≤ 20000 chars
@@ -143,17 +143,17 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Whitespace-only names/titles, proficiency out of range, JD length boundary at 20000, missing proficiency defaulting to 1
     - _Requirements: 1.2, 2.4, 2.5, 3.2, 4.2, 6.3_
 
-- [-] 10. Implement the service layer
-  - [-] 10.1 Implement `ProfileService` in `app/services/profile_service.py`
+- [x] 10. Implement the service layer
+  - [x] 10.1 Implement `ProfileService` in `app/services/profile_service.py`
     - CRUD for profiles, skills, certifications, projects; enforce default proficiency 1 and case-insensitive duplicate rejection; parent-existence checks so 404 precedes 409
     - _Requirements: 1.1, 1.3, 1.5, 2.1, 2.2, 2.5, 2.6, 2.7, 3.1, 3.3, 4.1, 4.4, 15.5_
 
-  - [-] 10.2 Implement `ResumeService` in `app/services/resume_service.py`
+  - [x] 10.2 Implement `ResumeService` in `app/services/resume_service.py`
     - Accept pasted text or uploaded file; ordered guards — media type (`text/plain`/`application/pdf`) else 415, size ≤ 5 MB else 413, resulting text non-empty else 422; PDF text extraction via `pypdf`, passthrough for plain text; replace existing resume
     - Persist nothing when any guard fails
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-  - [-] 10.3 Implement `AnalysisService` in `app/services/analysis_service.py`
+  - [x] 10.3 Implement `AnalysisService` in `app/services/analysis_service.py`
     - Load profile skills + resume, run extractor → comparator → scoring → roadmap, assemble result, persist the `Analysis`, and expose retrieval + list operations
     - Return a valid analysis flagged "no required skills identified" with score 0 when extraction yields nothing
     - _Requirements: 6.1, 7.6, 8.1, 10.12, 11.1, 11.2, 13.1, 13.2, 13.4_
@@ -166,44 +166,44 @@ The build order follows the layered architecture: shared kernel first (normalize
     - Extract text from a small generated PDF and confirm it is stored as resume text
     - _Requirements: 5.2_
 
-- [ ] 11. Checkpoint - persistence and services complete
+- [x] 11. Checkpoint - persistence and services complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 12. Implement FastAPI app, error handling, and routers
-  - [ ] 12.1 Implement app bootstrap and error handling in `app/main.py`
+- [x] 12. Implement FastAPI app, error handling, and routers
+  - [x] 12.1 Implement app bootstrap and error handling in `app/main.py`
     - Create FastAPI app, register routers, initialize DB, add global exception handler returning generic 500, and a validation handler returning 422 naming the failing field
     - Define the exception hierarchy resolving 404-over-409 precedence and generic not-found messages
     - _Requirements: 15.1, 15.3, 15.5, 18.1, 18.2, 23.3_
 
-  - [ ] 12.2 Implement health router in `app/routers/health.py`
+  - [x] 12.2 Implement health router in `app/routers/health.py`
     - `GET /health` returning success status
     - _Requirements: 15.6_
 
-  - [ ] 12.3 Implement profile/skills/certs/projects routers in `app/routers/profile.py`
+  - [x] 12.3 Implement profile/skills/certs/projects routers in `app/routers/profile.py`
     - Endpoints for profile create/get/update/delete, skill add/remove, certification add/remove, project add/remove with correct 200/201/404/409/422 status codes
     - _Requirements: 1.1, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.6, 2.7, 3.1, 3.2, 3.3, 4.1, 4.2, 4.4, 15.4, 16.3_
 
-  - [ ] 12.4 Implement resume router in `app/routers/resume.py`
+  - [x] 12.4 Implement resume router in `app/routers/resume.py`
     - `PUT /profiles/{id}/resume` for paste or upload with 200/404/415/413/422 status codes
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 15.4_
 
-  - [ ] 12.5 Implement analysis router in `app/routers/analysis.py`
+  - [x] 12.5 Implement analysis router in `app/routers/analysis.py`
     - `POST /profiles/{id}/analyses`, `GET /analyses/{id}`, `GET /profiles/{id}/analyses` with 201/200/404/422 status codes
     - _Requirements: 6.1, 6.2, 6.3, 11.1, 11.2, 13.2, 13.3, 13.4, 15.4_
 
-  - [ ]* 12.6 Write integration tests for status codes and precedence
+  - [x]* 12.6 Write integration tests for status codes and precedence
     - Assert 404-over-409 (duplicate skill under nonexistent profile → 404), 422 field naming, generic 500 body, and not-found non-disclosure
     - _Requirements: 15.4, 15.5, 18.1, 18.2, 23.3_
 
-  - [ ]* 12.7 Write end-to-end integration test for the analysis flow
+  - [x]* 12.7 Write end-to-end integration test for the analysis flow
     - create profile → add skills → submit resume → run analysis → retrieve persisted analysis
     - _Requirements: 13.1, 13.2, 13.4_
 
-  - [ ]* 12.8 Write smoke test for health endpoint
+  - [x]* 12.8 Write smoke test for health endpoint
     - Assert `GET /health` returns success
     - _Requirements: 15.6_
 
-- [ ] 13. Checkpoint - backend API complete
+- [x] 13. Checkpoint - backend API complete
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 14. Scaffold frontend project and shared types
