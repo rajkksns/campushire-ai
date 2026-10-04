@@ -1,0 +1,347 @@
+/* CampusHire AI — global styles (Task 15).
+ * A small, legible, dependency-free stylesheet. Layout favors clarity over
+ * decoration: readable line lengths, clear section separation, and visible
+ * focus states for keyboard accessibility (Requirement 22). */
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --border: #d8dde3;
+  --text: #1f2933;
+  --muted: #647382;
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --matched: #15803d;
+  --weak: #b45309;
+  --missing: #b91c1c;
+  --danger: #b91c1c;
+  --radius: 8px;
+  --gap: 16px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+}
+
+/* --- Layout ------------------------------------------------------------- */
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap);
+  margin-bottom: 8px;
+}
+
+.app-title {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.app-subtitle {
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+.app-nav {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 14px;
+  font-size: 1rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.nav-tab[aria-current='true'] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.nav-tab:disabled {
+  color: var(--border);
+  cursor: not-allowed;
+}
+
+/* --- Cards / panels ----------------------------------------------------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.panel h3 {
+  font-size: 1rem;
+  margin: 16px 0 8px;
+}
+
+/* --- Forms -------------------------------------------------------------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.field label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.field input[type='text'],
+.field input[type='number'],
+.field select,
+.field textarea {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+.nav-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* --- Buttons ------------------------------------------------------------ */
+button {
+  font: inherit;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  filter: brightness(0.95);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: var(--accent);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.btn-danger {
+  color: var(--danger);
+  border-color: transparent;
+  background: none;
+  cursor: pointer;
+}
+
+/* --- Lists / chips ------------------------------------------------------ */
+.item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+
+.empty-note {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* --- Status / banners --------------------------------------------------- */
+.banner {
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.banner-error {
+  background: #fde8e8;
+  color: var(--danger);
+  border: 1px solid #f5c2c2;
+}
+
+.banner-info {
+  background: #e8f0fe;
+  color: var(--accent);
+  border: 1px solid #c2d6f5;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Results ------------------------------------------------------------ */
+.score-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.score-dial {
+  --size: 120px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    var(--accent) calc(var(--score) * 1%),
+    var(--border) 0
+  );
+}
+
+.score-dial-inner {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.gap-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.cat-matched {
+  color: var(--matched);
+}
+.cat-weak {
+  color: var(--weak);
+}
+.cat-missing {
+  color: var(--missing);
+}
+
+table.breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+table.breakdown th,
+table.breakdown td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+table.breakdown td.num,
+table.breakdown th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+ol.roadmap {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
