@@ -123,7 +123,7 @@ async function request<T>(
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, init);
-  } catch (cause) {
+  } catch {
     // Network failure / server unreachable — surface a readable message (14.4).
     throw new ApiError(
       0,
