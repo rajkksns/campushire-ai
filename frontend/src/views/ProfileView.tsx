@@ -22,6 +22,10 @@ import * as api from '../api/apiClient';
 import type { ActiveProfile } from '../App';
 import type { ProfileDetailResponse } from '../types';
 import { StudentProfileForm } from '../components/StudentProfileForm';
+import { SkillsPanel } from '../components/SkillsPanel';
+import { CertsPanel } from '../components/CertsPanel';
+import { ProjectsPanel } from '../components/ProjectsPanel';
+import { ResumePanel } from '../components/ResumePanel';
 
 interface ProfileViewProps {
   activeProfile: ActiveProfile | null;
