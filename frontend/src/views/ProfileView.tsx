@@ -102,52 +102,26 @@ export function ProfileView({
 
           {detail && (
             <>
-              <SkillsPlaceholder />
-              <CertsPlaceholder />
-              <ProjectsPlaceholder />
-              <ResumePlaceholder />
+              <SkillsPanel
+                profileId={detail.id}
+                skills={detail.skills}
+                onChanged={reloadDetail}
+              />
+              <CertsPanel
+                profileId={detail.id}
+                certifications={detail.certifications}
+                onChanged={reloadDetail}
+              />
+              <ProjectsPanel
+                profileId={detail.id}
+                projects={detail.projects}
+                onChanged={reloadDetail}
+              />
+              <ResumePanel profileId={detail.id} />
             </>
           )}
         </>
       )}
     </div>
-  );
-}
-
-/* Temporary stand-ins — each replaced by its real panel as Task 15 proceeds. */
-
-function SkillsPlaceholder() {
-  return (
-    <section className="panel" aria-label="Skills">
-      <h2>Skills</h2>
-      <p className="empty-note">Skills panel coming next.</p>
-    </section>
-  );
-}
-
-function CertsPlaceholder() {
-  return (
-    <section className="panel" aria-label="Certifications">
-      <h2>Certifications</h2>
-      <p className="empty-note">Certifications panel coming next.</p>
-    </section>
-  );
-}
-
-function ProjectsPlaceholder() {
-  return (
-    <section className="panel" aria-label="Projects">
-      <h2>Projects</h2>
-      <p className="empty-note">Projects panel coming next.</p>
-    </section>
-  );
-}
-
-function ResumePlaceholder() {
-  return (
-    <section className="panel" aria-label="Resume">
-      <h2>Resume</h2>
-      <p className="empty-note">Resume panel coming next.</p>
-    </section>
   );
 }
