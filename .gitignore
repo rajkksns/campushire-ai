@@ -1,0 +1,5 @@
+
+*.db
+.hypothesis/
+__pycache__/
+*.pyc
