@@ -16,6 +16,7 @@
 
 import { useState } from 'react';
 
+import { AnalysisView } from './views/AnalysisView';
 import { ProfileView } from './views/ProfileView';
 
 /** The identity of the currently selected profile, shared across views. */
