@@ -1,24 +1,4 @@
-/**
- * Shared TypeScript types mirroring the CampusHire AI backend API contract
- * (Task 14.2, Requirement 15.3).
- *
- * These types are a faithful, hand-maintained mirror of the backend Pydantic
- * schemas in `backend/app/schemas/` and the routers in `backend/app/routers/`.
- * Field names, optionality, enum string values, and numeric bounds match the
- * backend exactly so the typed API client (`src/api/apiClient.ts`) and the UI
- * cannot drift from the server contract.
- *
- * Source of truth:
- *   - schemas/common.py       -> SkillType, BreakdownCategory, RoadmapCategory
- *   - schemas/profile.py      -> Profile*/ProfileDetail
- *   - schemas/skill.py        -> Skill*
- *   - schemas/certification.py-> Certification*
- *   - schemas/project.py      -> Project*
- *   - schemas/resume.py       -> Resume*
- *   - schemas/analysis.py     -> Analysis* / Breakdown / Matched/Weak/Missing / Roadmap
- *   - schemas/errors.py + main.py -> ApiErrorBody
- */
-
+﻿
 // --------------------------------------------------------------------------- //
 // Enums (string-literal unions matching the backend Literal values)
 // --------------------------------------------------------------------------- //
